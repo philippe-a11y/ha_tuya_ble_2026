@@ -349,6 +349,22 @@ class HASSTuyaBLEDeviceManager(AbstaractTuyaBLEDeviceManager):
             if item:
                 credentials = item.credentials.get(address)
 
+            # v0.4.7: If the cloud refresh produced no credentials for this
+            # address — most commonly because the Tuya cloud development
+            # subscription expired (HTTP 28841002) — fall back to the
+            # credentials persisted in entry.options from prior successful
+            # cloud syncs. The cost is that we no longer auto-detect a
+            # factory-reset+re-pair while the cloud is down, but a stuck
+            # lock beats a working credential refresh.
+            if not credentials and self._has_credentials(self._data):
+                _LOGGER.warning(
+                    "Cloud lookup for %s returned no credentials; "
+                    "falling back to cached entry.options. This is "
+                    "expected if the Tuya IoT subscription has expired.",
+                    address,
+                )
+                credentials = self._data.copy()
+
         if credentials:
             result = TuyaBLEDeviceCredentials(
                 credentials.get(CONF_UUID, ""),

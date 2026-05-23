@@ -721,6 +721,39 @@ class TuyaBLEDevice:
             self._current_seq_num = 1
         self._outbound_idx = 0
 
+    async def _start_notify_compat(
+        self, char_uuid: str, handler
+    ) -> None:
+        """Start GATT notifications, working around the bleak 2.0+ BlueZ regression.
+
+        bleak 2.0.0 switched the BlueZ notification subscription from
+        ``StartNotify`` to ``AcquireNotify``. ``AcquireNotify`` tries to take
+        an exclusive notification handle from BlueZ, which some peripherals
+        (including the CTL20H lock) reject with
+        ``[org.bluez.Error.NotPermitted] Notify acquired``.
+
+        bleak 2.1.0 added a public escape hatch: pass
+        ``bluez={"use_start_notify": True}`` to ``start_notify()`` and the
+        backend forces the old ``StartNotify`` path. We try that first; if
+        an older bleak is installed and rejects the unknown kwarg with
+        ``TypeError`` (or ``KeyError`` from the backend), we fall back to
+        the plain call. Either branch raises if the GATT subscribe truly
+        fails - the outer caller's try/except handles that.
+
+        References:
+          - HA core issue #160503
+          - hbldh/bleak issue #1885
+        """
+        try:
+            await self._client.start_notify(
+                char_uuid,
+                handler,
+                bluez={"use_start_notify": True},
+            )
+        except (TypeError, KeyError):
+            # bleak < 2.1 does not accept the bluez kwarg
+            await self._client.start_notify(char_uuid, handler)
+
     async def _ensure_connected(self) -> None:
         """Ensure connection to device is established."""
         global global_connect_lock
@@ -804,14 +837,14 @@ class TuyaBLEDevice:
                                   self.address, self.rssi)
                     self._client = client
                     try:
-                        await self._client.start_notify(
+                        await self._start_notify_compat(
                             CHARACTERISTIC_NOTIFY, self._notification_handler
                         )
                         self._char_notify = CHARACTERISTIC_NOTIFY
                         self._char_write = CHARACTERISTIC_WRITE
                     except Exception:
                         try:
-                            await self._client.start_notify(
+                            await self._start_notify_compat(
                                 CHARACTERISTIC_NOTIFY_OLD, self._notification_handler
                             )
                             self._char_notify = CHARACTERISTIC_NOTIFY_OLD

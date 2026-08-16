@@ -294,7 +294,7 @@
           "password": "[%key:common::config_flow::data::password%]",
           "username": "Account"
         },
-        "description": "Refer to documentation of Tuya integration to retrive the cloud credentials https://www.home-assistant.io/integrations/tuya/\n\nEnter your Tuya credentials."
+        "description": "Refer to the [Tuya integration documentation]({tuya_docs_url}) to retrieve the cloud credentials.\n\nEnter your Tuya credentials."
       }
     }
   }

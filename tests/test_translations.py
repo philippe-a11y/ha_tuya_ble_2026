@@ -67,12 +67,15 @@ class TranslationTests(unittest.TestCase):
     def test_login_description_uses_a_url_placeholder(self):
         for path in (ROOT / "strings.json", ROOT / "translations" / "en.json"):
             with self.subTest(path=path.name):
-                description = json.loads(path.read_text(encoding="utf-8"))[
-                    "config"
-                ]["step"]["login"]["description"]
+                data = json.loads(path.read_text(encoding="utf-8"))
+                for flow_name in ("config", "options"):
+                    with self.subTest(path=path.name, flow=flow_name):
+                        description = data[flow_name]["step"]["login"][
+                            "description"
+                        ]
 
-                self.assertNotIn("https://", description)
-                self.assertIn("{tuya_docs_url}", description)
+                        self.assertNotIn("https://", description)
+                        self.assertIn("{tuya_docs_url}", description)
 
 
 if __name__ == "__main__":

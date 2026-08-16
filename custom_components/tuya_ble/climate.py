@@ -23,6 +23,22 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .brandson_coolbox import (
+    CATEGORY as BRANDSON_CATEGORY,
+    DP_COMPRESSOR,
+    DP_CURRENT_TEMPERATURE,
+    DP_POWER,
+    DP_TARGET_TEMPERATURE,
+    DP_TEMPERATURE_UNIT,
+    PRODUCT_ID as BRANDSON_PRODUCT_ID,
+    TARGET_MAX_C,
+    TARGET_MIN_C,
+    TARGET_STEP_C,
+    UNIT_CELSIUS,
+    UNIT_FAHRENHEIT,
+    celsius_to_device_temperature,
+    device_temperature_to_celsius,
+)
 from .const import DOMAIN
 from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo
 from .tuya_ble import TuyaBLEDataPoint, TuyaBLEDataPointType, TuyaBLEDevice
@@ -50,6 +66,10 @@ class TuyaBLEClimateMapping:
     target_temperature_max: float = 30.0
     target_temperature_min: float = 5
     target_temperature_step: float = 1.0
+    temperature_unit_dp_id: int = 0
+
+    hvac_action_dp_id: int = 0
+    hvac_action_active: HVACAction | None = None
 
     current_humidity_dp_id: int = 0
     current_humidity_coefficient: float = 1.0
@@ -66,6 +86,29 @@ class TuyaBLECategoryClimateMapping:
 
 
 mapping: dict[str, TuyaBLECategoryClimateMapping] = {
+    BRANDSON_CATEGORY: TuyaBLECategoryClimateMapping(
+        products={
+            BRANDSON_PRODUCT_ID: [
+                TuyaBLEClimateMapping(
+                    description=ClimateEntityDescription(
+                        key="coolbox",
+                    ),
+                    hvac_switch_dp_id=DP_POWER,
+                    hvac_switch_mode=HVACMode.COOL,
+                    hvac_modes=[HVACMode.OFF, HVACMode.COOL],
+                    hvac_action_dp_id=DP_COMPRESSOR,
+                    hvac_action_active=HVACAction.COOLING,
+                    temperature_unit=UnitOfTemperature.CELSIUS,
+                    temperature_unit_dp_id=DP_TEMPERATURE_UNIT,
+                    current_temperature_dp_id=DP_CURRENT_TEMPERATURE,
+                    target_temperature_dp_id=DP_TARGET_TEMPERATURE,
+                    target_temperature_min=TARGET_MIN_C,
+                    target_temperature_max=TARGET_MAX_C,
+                    target_temperature_step=TARGET_STEP_C,
+                ),
+            ],
+        },
+    ),
     "wk": TuyaBLECategoryClimateMapping(
         products={
             **dict.fromkeys(
@@ -184,22 +227,52 @@ class TuyaBLEClimate(TuyaBLEEntity, ClimateEntity):
             self._attr_max_humidity = mapping.target_humidity_max
             self._attr_min_humidity = mapping.target_humidity_min
 
+    def _temperature_unit_value(self) -> int:
+        """Return the device display unit, defaulting safely to Celsius."""
+        if self._mapping.temperature_unit_dp_id:
+            datapoint = self._device.datapoints[
+                self._mapping.temperature_unit_dp_id
+            ]
+            if datapoint and datapoint.value == UNIT_FAHRENHEIT:
+                return UNIT_FAHRENHEIT
+        return UNIT_CELSIUS
+
+    def _temperature_from_device(self, value: float, coefficient: float) -> float:
+        """Scale a raw value and convert a unit-aware mapping to Celsius."""
+        result = value / coefficient
+        if self._mapping.temperature_unit_dp_id:
+            return device_temperature_to_celsius(
+                result, self._temperature_unit_value()
+            )
+        return result
+
+    def _temperature_datapoint_is_current(self, datapoint: TuyaBLEDataPoint) -> bool:
+        """Wait for temperatures reported at or after a display-unit change."""
+        if not self._mapping.temperature_unit_dp_id:
+            return True
+        unit_dp = self._device.datapoints[self._mapping.temperature_unit_dp_id]
+        if not unit_dp:
+            return True
+        return getattr(datapoint, "timestamp", 0) >= getattr(unit_dp, "timestamp", 0)
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
 
         if self._mapping.current_temperature_dp_id != 0:
             datapoint = self._device.datapoints[self._mapping.current_temperature_dp_id]
-            if datapoint:
-                self._attr_current_temperature = (
-                    datapoint.value / self._mapping.current_temperature_coefficient
+            if datapoint and self._temperature_datapoint_is_current(datapoint):
+                self._attr_current_temperature = self._temperature_from_device(
+                    datapoint.value,
+                    self._mapping.current_temperature_coefficient,
                 )
 
         if self._mapping.target_temperature_dp_id != 0:
             datapoint = self._device.datapoints[self._mapping.target_temperature_dp_id]
-            if datapoint:
-                self._attr_target_temperature = (
-                    datapoint.value / self._mapping.target_temperature_coefficient
+            if datapoint and self._temperature_datapoint_is_current(datapoint):
+                self._attr_target_temperature = self._temperature_from_device(
+                    datapoint.value,
+                    self._mapping.target_temperature_coefficient,
                 )
 
         if self._mapping.current_humidity_dp_id != 0:
@@ -240,26 +313,40 @@ class TuyaBLEClimate(TuyaBLEEntity, ClimateEntity):
                     break
             self._attr_preset_mode = current_preset_mode
 
-        try:
-            if (
-                self._attr_preset_mode == PRESET_AWAY
-                or self._attr_hvac_mode == HVACMode.OFF
-                or self._attr_target_temperature <= self._attr_current_temperature
-            ):
-                self._attr_hvac_action = HVACAction.IDLE
+        if self._mapping.hvac_action_dp_id and self._mapping.hvac_action_active:
+            action_dp = self._device.datapoints[self._mapping.hvac_action_dp_id]
+            if self._attr_hvac_mode == HVACMode.OFF:
+                self._attr_hvac_action = HVACAction.OFF
+            elif action_dp and bool(action_dp.value):
+                self._attr_hvac_action = self._mapping.hvac_action_active
             else:
-                self._attr_hvac_action = HVACAction.HEATING
-        except:
-            pass
+                self._attr_hvac_action = HVACAction.IDLE
+        else:
+            try:
+                if (
+                    self._attr_preset_mode == PRESET_AWAY
+                    or self._attr_hvac_mode == HVACMode.OFF
+                    or self._attr_target_temperature <= self._attr_current_temperature
+                ):
+                    self._attr_hvac_action = HVACAction.IDLE
+                else:
+                    self._attr_hvac_action = HVACAction.HEATING
+            except (AttributeError, TypeError):
+                pass
 
         self.async_write_ha_state()
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
         if self._mapping.target_temperature_dp_id != 0:
-            int_value = int(
-                kwargs["temperature"] * self._mapping.target_temperature_coefficient
-            )
+            value = kwargs["temperature"]
+            if self._mapping.temperature_unit_dp_id:
+                value = celsius_to_device_temperature(
+                    value, self._temperature_unit_value()
+                )
+            int_value = int(round(
+                value * self._mapping.target_temperature_coefficient
+            ))
             datapoint = self._device.datapoints.get_or_create(
                 self._mapping.target_temperature_dp_id,
                 TuyaBLEDataPointType.DT_VALUE,

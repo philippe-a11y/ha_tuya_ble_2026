@@ -17,6 +17,7 @@ from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfElectricPotential,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -33,6 +34,12 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .brandson_coolbox import (
+    CATEGORY as BRANDSON_CATEGORY,
+    DP_BATTERY,
+    DP_INPUT_VOLTAGE,
+    PRODUCT_ID as BRANDSON_PRODUCT_ID,
+)
 from .const import (
     BATTERY_STATE_HIGH,
     BATTERY_STATE_LOW,
@@ -113,6 +120,27 @@ class TuyaBLECategorySensorMapping:
 
 
 mapping: dict[str, TuyaBLECategorySensorMapping] = {
+    BRANDSON_CATEGORY: TuyaBLECategorySensorMapping(
+        products={
+            BRANDSON_PRODUCT_ID: [
+                TuyaBLESensorMapping(
+                    dp_id=DP_INPUT_VOLTAGE,
+                    description=SensorEntityDescription(
+                        key="input_voltage",
+                        device_class=SensorDeviceClass.VOLTAGE,
+                        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                        state_class=SensorStateClass.MEASUREMENT,
+                    ),
+                    coefficient=10.0,
+                    dp_type=TuyaBLEDataPointType.DT_VALUE,
+                ),
+                TuyaBLEBatteryMapping(
+                    dp_id=DP_BATTERY,
+                    dp_type=TuyaBLEDataPointType.DT_VALUE,
+                ),
+            ],
+        },
+    ),
     "co2bj": TuyaBLECategorySensorMapping(
         products={
             "59s19z5m": [  # CO2 Detector

@@ -16,6 +16,13 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .brandson_coolbox import (
+    CATEGORY as BRANDSON_CATEGORY,
+    DP_BATTERY_PROTECTION,
+    DP_MODE,
+    DP_TEMPERATURE_UNIT,
+    PRODUCT_ID as BRANDSON_PRODUCT_ID,
+)
 from .const import (
     DOMAIN,
     FINGERBOT_MODE_PROGRAM,
@@ -66,6 +73,40 @@ class TuyaBLECategorySelectMapping:
 
 
 mapping: dict[str, TuyaBLECategorySelectMapping] = {
+    BRANDSON_CATEGORY: TuyaBLECategorySelectMapping(
+        products={
+            BRANDSON_PRODUCT_ID: [
+                TuyaBLESelectMapping(
+                    dp_id=DP_MODE,
+                    description=SelectEntityDescription(
+                        key="operating_mode",
+                        options=["max", "eco"],
+                        entity_category=EntityCategory.CONFIG,
+                    ),
+                    dp_type=TuyaBLEDataPointType.DT_ENUM,
+                ),
+                TuyaBLESelectMapping(
+                    dp_id=DP_BATTERY_PROTECTION,
+                    description=SelectEntityDescription(
+                        key="battery_protection",
+                        options=["low", "medium", "high"],
+                        entity_category=EntityCategory.CONFIG,
+                    ),
+                    dp_type=TuyaBLEDataPointType.DT_ENUM,
+                ),
+                TuyaBLESelectMapping(
+                    dp_id=DP_TEMPERATURE_UNIT,
+                    description=TemperatureUnitDescription(
+                        options=[
+                            UnitOfTemperature.CELSIUS,
+                            UnitOfTemperature.FAHRENHEIT,
+                        ],
+                    ),
+                    dp_type=TuyaBLEDataPointType.DT_ENUM,
+                ),
+            ],
+        },
+    ),
     "co2bj": TuyaBLECategorySelectMapping(
         products={
             "59s19z5m":  # CO2 Detector

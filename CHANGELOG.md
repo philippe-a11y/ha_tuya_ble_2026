@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [0.4.9] - 2026-08-16
+
+### Added
+
+- Added local BLE support for the Brandson Coolbox (`xbx_2b_2` / `boagb65r`).
+- Added a manual BLE credential flow for devices missing from the public Tuya
+  Cloud API.
+- Added tests for the Brandson datapoint contract, climate conversion, status
+  entities, manual configuration, cloud bypass, and translations.
+- Added a security-conscious guide for extracting per-device credentials from
+  the Tuya Android app.
+
+### Fixed
+
+- Preserved stored keys when the manual options form is submitted with blank
+  secret fields.
+- Normalized Celsius and Fahrenheit device values for Home Assistant.
+- Decoded fault bitmaps by their contents instead of object truthiness.
+- Removed temporary raw-packet warning logs and fixed a Python invalid escape
+  warning.
+
 ## [0.1.0] - 2023-04-22
 
 - Initial release

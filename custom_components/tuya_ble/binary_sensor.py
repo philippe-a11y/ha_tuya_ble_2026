@@ -17,6 +17,13 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .brandson_coolbox import (
+    CATEGORY as BRANDSON_CATEGORY,
+    DP_COMPRESSOR,
+    DP_FAULT,
+    PRODUCT_ID as BRANDSON_PRODUCT_ID,
+    bitmap_has_fault,
+)
 from .const import (
     DOMAIN,
 )
@@ -51,7 +58,38 @@ class TuyaBLECategoryBinarySensorMapping:
     mapping: list[TuyaBLEBinarySensorMapping] | None = None
 
 
+def coolbox_fault_getter(entity: "TuyaBLEBinarySensor") -> None:
+    """Decode the fault bitmap by content instead of object truthiness."""
+    datapoint = entity._device.datapoints[DP_FAULT]
+    if datapoint:
+        entity._attr_is_on = bitmap_has_fault(datapoint.value)
+
+
 mapping: dict[str, TuyaBLECategoryBinarySensorMapping] = {
+    BRANDSON_CATEGORY: TuyaBLECategoryBinarySensorMapping(
+        products={
+            BRANDSON_PRODUCT_ID: [
+                TuyaBLEBinarySensorMapping(
+                    dp_id=DP_COMPRESSOR,
+                    description=BinarySensorEntityDescription(
+                        key="compressor_running",
+                        device_class=BinarySensorDeviceClass.RUNNING,
+                    ),
+                    dp_type=TuyaBLEDataPointType.DT_BOOL,
+                ),
+                TuyaBLEBinarySensorMapping(
+                    dp_id=DP_FAULT,
+                    description=BinarySensorEntityDescription(
+                        key="fault",
+                        device_class=BinarySensorDeviceClass.PROBLEM,
+                        entity_category=EntityCategory.DIAGNOSTIC,
+                    ),
+                    dp_type=TuyaBLEDataPointType.DT_BITMAP,
+                    getter=coolbox_fault_getter,
+                ),
+            ],
+        },
+    ),
     "wk": TuyaBLECategoryBinarySensorMapping(
         products={
             "drlajpqc": [  # Thermostatic Radiator Valve

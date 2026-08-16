@@ -2,7 +2,12 @@
 
 ## About This Fork
 
-This is a compatibility fork of [PlusPlus-ua/ha_tuya_ble](https://github.com/PlusPlus-ua/ha_tuya_ble) maintained by [@paul43210](https://github.com/paul43210), updated to work with **Home Assistant 2025.x and 2026.x**.
+This repository is based on
+[@paul43210/ha_tuya_ble_2026](https://github.com/paul43210/ha_tuya_ble_2026),
+the Home Assistant 2025.x/2026.x compatibility fork of
+[@PlusPlus-ua/ha_tuya_ble](https://github.com/PlusPlus-ua/ha_tuya_ble).
+It adds Brandson Coolbox support and a manual BLE credential path for devices
+that are missing from the public Tuya Cloud API.
 
 ### Compatibility Fixes Applied (April 2026)
 
@@ -31,9 +36,9 @@ _Inspired by code of [@redphx](https://github.com/redphx/poc-tuya-ble-fingerbot)
 
 Install via [HACS](https://hacs.xyz/) by adding this repository as a custom integration repository:
 
-`https://github.com/paul43210/ha_tuya_ble_2026`
+`https://github.com/philippe-a11y/ha_tuya_ble_2026`
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=paul43210&repository=ha_tuya_ble_2026&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=philippe-a11y&repository=ha_tuya_ble_2026&category=integration)
 
 ## Usage
 
@@ -42,6 +47,12 @@ After adding to Home Assistant the integration should discover all supported Blu
 The integration works locally over BLE. Initial setup requires a one-time cloud credential fetch from the [Tuya IoT Platform](https://iot.tuya.com) to obtain device IDs and encryption keys. After setup, all communication is local Bluetooth — no internet connection required for day-to-day operation.
 
 To obtain credentials, refer to the official Tuya integration [documentation](https://www.home-assistant.io/integrations/tuya/).
+
+For devices that are visible in the Tuya app but missing from the public Cloud
+API, the configuration flow also supports manual BLE credentials. See
+[Extracting Tuya BLE device credentials](CODE_EXTRACTION.md) for the tested,
+security-conscious Android/Frida procedure. Keys are device-specific secrets
+and must never be committed to this repository.
 
 ## Supported devices list
 
@@ -73,6 +84,14 @@ To obtain credentials, refer to the official Tuya integration [documentation](ht
 
 * Irrigation computer (category_id 'ggq')
   + Irrigation computer (product_id '6pahkcau')
+
+* Portable coolers (category_id 'xbx_2b_2')
+  + Brandson Coolbox (product_id 'boagb65r').
+
+  Supported entities include power and target temperature control, current
+  temperature, compressor state, fault state, input voltage, operating mode
+  (Max/Eco), and battery protection (Low/Medium/High). Celsius and Fahrenheit
+  device modes are normalized to Home Assistant's temperature system.
 
 ## Support the original project
 

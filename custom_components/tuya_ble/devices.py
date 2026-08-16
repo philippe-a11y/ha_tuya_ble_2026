@@ -18,6 +18,10 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from home_assistant_bluetooth import BluetoothServiceInfoBleak
+from .brandson_coolbox import (
+    CATEGORY as BRANDSON_CATEGORY,
+    PRODUCT_ID as BRANDSON_PRODUCT_ID,
+)
 from .tuya_ble import (
     AbstaractTuyaBLEDeviceManager,
     TuyaBLEDataPoint,
@@ -170,6 +174,13 @@ class TuyaBLECategoryInfo:
 
 
 devices_database: dict[str, TuyaBLECategoryInfo] = {
+    BRANDSON_CATEGORY: TuyaBLECategoryInfo(
+        products={
+            BRANDSON_PRODUCT_ID: TuyaBLEProductInfo(
+                name="Brandson Coolbox",
+            ),
+        },
+    ),
     "co2bj": TuyaBLECategoryInfo(
         products={
             "59s19z5m": TuyaBLEProductInfo(  # device product_id

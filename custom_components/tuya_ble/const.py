@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing_extensions import Final
+from typing import Final
 
 DOMAIN: Final = "tuya_ble"
 
@@ -19,6 +19,8 @@ CONF_DEVICE_NAME: Final = "device_name"
 CONF_PRODUCT_MODEL: Final = "product_model"
 CONF_PRODUCT_NAME: Final = "product_name"
 CONF_BLE_USER_ID: Final = "ble_user_id"
+CONF_MANUAL_BLE_MODE: Final = "manual_ble_mode"
+CONF_SEC_KEY: Final = "sec_key"
 
 TUYA_API_DEVICES_URL: Final = "/v1.0/users/%s/devices"
 TUYA_API_FACTORY_INFO_URL: Final = "/v1.0/iot-03/devices/factory-infos?device_ids=%s"
@@ -39,4 +41,3 @@ FINGERBOT_MODE_PUSH: Final = "push"
 FINGERBOT_MODE_SWITCH: Final = "switch"
 FINGERBOT_MODE_PROGRAM: Final = "program"
 FINGERBOT_BUTTON_EVENT: Final = "fingerbot_button_pressed"
-

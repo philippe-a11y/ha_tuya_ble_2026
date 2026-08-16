@@ -4,12 +4,34 @@
             "no_unconfigured_devices": "No unconfigured devices found."
         },
         "error": {
+            "device_not_found": "The selected Bluetooth device is no longer available.",
             "device_not_registered": "Device is not registered in Tuya cloud",
             "invalid_auth": "Invalid authentication",
-            "login_error": "Login error ({code}): {msg}"
+            "invalid_key_length": "The key must contain exactly 16 UTF-8 bytes.",
+            "login_error": "Login error ({code}): {msg}",
+            "required": "This field is required."
         },
         "flow_title": "{name}",
         "step": {
+            "user": {
+                "menu_options": {
+                    "login": "Tuya Cloud",
+                    "manual": "Manual BLE device"
+                }
+            },
+            "manual": {
+                "data": {
+                    "address": "Tuya BLE device",
+                    "category": "Category",
+                    "device_id": "Device ID",
+                    "device_name": "Device name",
+                    "local_key": "Local key",
+                    "product_id": "Product ID",
+                    "sec_key": "Security key (optional)",
+                    "uuid": "UUID / Node ID"
+                },
+                "description": "Select the discovered BLE device and enter its Tuya device credentials. No Tuya Cloud request is made in this mode."
+            },
             "device": {
                 "data": {
                     "address": "Tuya BLE device"
@@ -24,12 +46,23 @@
                     "password": "Password",
                     "username": "Account"
                 },
-                "description": "Tuya BLE requires obtaining encryption key from Tuya cloud. Almost all devices only need to access the cloud once during setup.\n\nRefer to documentation of Tuya integration to retrive the cloud credentials https://www.home-assistant.io/integrations/tuya/\n\nEnter your Tuya credentials."
+        "description": "Tuya BLE requires obtaining an encryption key from Tuya Cloud. Almost all devices only need to access the cloud once during setup.\n\nRefer to the [Tuya integration documentation]({tuya_docs_url}) to retrieve the cloud credentials.\n\nEnter your Tuya credentials."
             }
         }
     },
     "entity": {
+        "climate": {
+            "coolbox": {
+                "name": "Coolbox"
+            }
+        },
         "binary_sensor": {
+            "compressor_running": {
+                "name": "Compressor"
+            },
+            "fault": {
+                "name": "Fault"
+            },
             "low_battery": {
                 "name": "Battery"
             },
@@ -78,6 +111,21 @@
             }
         },
         "select": {
+            "operating_mode": {
+                "name": "Operating mode",
+                "state": {
+                    "max": "MAX",
+                    "eco": "ECO"
+                }
+            },
+            "battery_protection": {
+                "name": "Battery protection",
+                "state": {
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High"
+                }
+            },
             "beep_volume": {
                 "name": "Lock Volume"
             },
@@ -101,6 +149,9 @@
             }
         },
         "sensor": {
+            "input_voltage": {
+                "name": "Input voltage"
+            },
             "alarm_lock": {
                 "name": "Alarm"
             },
@@ -227,9 +278,23 @@
         "error": {
             "device_not_registered": "Device is not registered in Tuya cloud",
             "invalid_auth": "Invalid authentication",
-            "login_error": "Login error ({code}): {msg}"
+            "invalid_key_length": "The key must contain exactly 16 UTF-8 bytes.",
+            "login_error": "Login error ({code}): {msg}",
+            "required": "This field is required."
         },
         "step": {
+            "manual": {
+                "data": {
+                    "category": "Category",
+                    "device_id": "Device ID",
+                    "device_name": "Device name",
+                    "local_key": "New local key (leave blank to keep the current key)",
+                    "product_id": "Product ID",
+                    "sec_key": "New security key (leave blank to keep the current key)",
+                    "uuid": "UUID / Node ID"
+                },
+                "description": "Edit the manually supplied BLE credentials. Saved keys are never displayed."
+            },
             "login": {
                 "data": {
                     "access_id": "Tuya IoT Access ID",
@@ -238,7 +303,7 @@
                     "password": "Password",
                     "username": "Account"
                 },
-                "description": "Refer to documentation of Tuya integration to retrive the cloud credentials https://www.home-assistant.io/integrations/tuya/\n\nEnter your Tuya credentials."
+                "description": "Refer to the [Tuya integration documentation]({tuya_docs_url}) to retrieve the cloud credentials.\n\nEnter your Tuya credentials."
             }
         }
     }

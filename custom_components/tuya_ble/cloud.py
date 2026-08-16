@@ -48,6 +48,7 @@ from .const import (
     CONF_DEVICE_NAME,
     CONF_PRODUCT_NAME,
     CONF_BLE_USER_ID,
+    CONF_MANUAL_BLE_MODE,
     DOMAIN,
     TUYA_API_DEVICES_URL,
     TUYA_API_FACTORY_INFO_URL,
@@ -327,7 +328,11 @@ class HASSTuyaBLEDeviceManager(AbstaractTuyaBLEDeviceManager):
         credentials: dict[str, any] | None = None
         result: TuyaBLEDeviceCredentials | None = None
 
-        if not force_update and self._has_credentials(self._data):
+        if self._data.get(CONF_MANUAL_BLE_MODE) is True:
+            if not self._has_credentials(self._data):
+                return None
+            credentials = self._data.copy()
+        elif not force_update and self._has_credentials(self._data):
             credentials = self._data.copy()
         else:
             cache_key: str | None = None

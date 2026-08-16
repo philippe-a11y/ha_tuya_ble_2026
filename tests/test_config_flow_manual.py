@@ -73,12 +73,14 @@ class _BaseFlow:
         return {"type": "menu", "step_id": step_id, "menu_options": menu_options}
 
     def async_show_form(self, *, step_id, data_schema, errors, **kwargs):
-        return {
+        result = {
             "type": "form",
             "step_id": step_id,
             "data_schema": data_schema,
             "errors": errors,
         }
+        result.update(kwargs)
+        return result
 
     def async_create_entry(self, *, title, data, options=None):
         result = {"type": "create_entry", "title": title, "data": data}
@@ -258,6 +260,17 @@ class ConfigFlowTests(unittest.TestCase):
         self.assertEqual("menu", result["type"])
         self.assertEqual(["login", "manual"], result["menu_options"])
         self.assertIsNone(flow._manager)
+
+    def test_login_form_supplies_tuya_documentation_url(self):
+        config_flow = load_config_flow()
+        flow = config_flow.TuyaBLEConfigFlow()
+
+        result = asyncio.run(flow.async_step_login())
+
+        self.assertEqual(
+            "https://www.home-assistant.io/integrations/tuya/",
+            result["description_placeholders"]["tuya_docs_url"],
+        )
 
     def test_discovered_device_opens_manual_form(self):
         discovery = _Discovery()

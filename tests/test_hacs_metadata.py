@@ -26,6 +26,20 @@ class HACSMetadataTests(unittest.TestCase):
         self.assertEqual(f"{REPOSITORY_URL}/issues", manifest["issue_tracker"])
         self.assertIn("@philippe-a11y", manifest["codeowners"])
 
+    def test_manifest_keys_follow_hassfest_order(self):
+        manifest = json.loads(
+            (
+                ROOT
+                / "custom_components"
+                / "tuya_ble"
+                / "manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        remaining_keys = list(manifest)[2:]
+        self.assertEqual(["domain", "name"], list(manifest)[:2])
+        self.assertEqual(sorted(remaining_keys), remaining_keys)
+
     def test_hacs_manifest_and_repository_layout(self):
         hacs = json.loads((ROOT / "hacs.json").read_text(encoding="utf-8"))
 

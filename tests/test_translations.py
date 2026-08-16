@@ -64,6 +64,16 @@ class TranslationTests(unittest.TestCase):
                 self.assertIn("sec_key", config["step"]["manual"]["data"])
                 self.assertIn("manual", data["options"]["step"])
 
+    def test_login_description_uses_a_url_placeholder(self):
+        for path in (ROOT / "strings.json", ROOT / "translations" / "en.json"):
+            with self.subTest(path=path.name):
+                description = json.loads(path.read_text(encoding="utf-8"))[
+                    "config"
+                ]["step"]["login"]["description"]
+
+                self.assertNotIn("https://", description)
+                self.assertIn("{tuya_docs_url}", description)
+
 
 if __name__ == "__main__":
     unittest.main()

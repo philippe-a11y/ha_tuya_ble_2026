@@ -269,6 +269,10 @@ def _show_login_form(
     placeholders: dict[str, Any],
 ) -> FlowResult:
     """Shows the Tuya IOT platform login form."""
+    placeholders.setdefault(
+        "tuya_docs_url",
+        "https://www.home-assistant.io/integrations/tuya/",
+    )
     if user_input is not None and user_input.get(CONF_COUNTRY_CODE) is not None:
         for country in TUYA_COUNTRIES:
             if country.country_code == user_input[CONF_COUNTRY_CODE]:
